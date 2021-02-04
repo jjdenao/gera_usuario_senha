@@ -1,0 +1,14 @@
+program Relatorio;
+
+uses
+  Vcl.Forms,
+  untRelatorio in 'untRelatorio.pas' {frmRelatorio};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TfrmRelatorio, frmRelatorio);
+  Application.Run;
+end.

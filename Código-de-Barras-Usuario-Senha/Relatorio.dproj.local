@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2019/05/14 01:05:13.000.466,=C:\Users\Denis\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2019/05/14 01:10:58.000.553,C:\Users\Denis\Documents\Embarcadero\Studio\Projects\Unit1.pas=J:\_Desenvolvimento\Código-de-Barras\untRelatorio.pas</Transaction>
+    <Transaction>2019/05/14 01:10:58.000.553,C:\Users\Denis\Documents\Embarcadero\Studio\Projects\Unit1.dfm=J:\_Desenvolvimento\Código-de-Barras\untRelatorio.dfm</Transaction>
+    <Transaction>2019/05/14 01:15:24.000.430,C:\Users\Denis\Documents\Embarcadero\Studio\Projects\Project1.dproj=J:\_Desenvolvimento\Código-de-Barras\Relatorio.dproj</Transaction>
+    <Transaction>2019/05/14 01:23:11.000.984,=J:\_Desenvolvimento\Código-de-Barras\biblioteca\untConstante.pas</Transaction>
+    <Transaction>2019/05/14 01:23:12.000.003,=J:\_Desenvolvimento\Código-de-Barras\biblioteca\untFuncao.pas</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,1050 @@
+unit untRelatorio;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.DBGrids, Vcl.ComCtrls,
+  Vcl.Grids, Vcl.Buttons, Vcl.Mask, Vcl.ExtCtrls, Vcl.ImgList, frxExportXLSX,
+  frxExportText, frxExportDOCX, frxExportMail, frxExportXML, frxClass,
+  frxExportBaseDialog, frxExportPDF, frxDBSet, Data.DB, Datasnap.DBClient,
+  frxRich, frxCross, frxOLE, frxBarcode, frxChBox, frxGradient,
+  Vcl.Menus, System.ImageList;
+
+type
+  TAuxGrid = class(TStringGrid);
+
+  TfrmRelatorio = class(TForm)
+    pnlTitulo: TPanel;
+    pgcItensAlmoxarifado: TPageControl;
+    tsCadastro: TTabSheet;
+    pnlCadGeral: TPanel;
+    pnlBottomComponentes: TPanel;
+    lblCodigo: TLabel;
+    lblMatricula: TLabel;
+    lblSenha: TLabel;
+    lblDataCadastro: TLabel;
+    lblLinhaSelecionada: TLabel;
+    dbeCodigo: TEdit;
+    dbeMatricula: TEdit;
+    dbeSenha: TEdit;
+    dbeDataCadastro: TMaskEdit;
+    btnADD: TBitBtn;
+    pnlClientComponentes: TPanel;
+    stgAddItens: TStringGrid;
+    StatusBar1: TStatusBar;
+    pnlBotao: TPanel;
+    btnIncluir: TBitBtn;
+    btnAlterar: TBitBtn;
+    btnExcluir: TBitBtn;
+    btnFechar: TBitBtn;
+    btnSalvar: TBitBtn;
+    btnCancelar: TBitBtn;
+    btnPesquisa: TBitBtn;
+    tsPesquisa: TTabSheet;
+    pnlDbgrid: TPanel;
+    DBGrid1: TDBGrid;
+    Panel1: TPanel;
+    Panel4: TPanel;
+    Label10: TLabel;
+    btnLimparPesquisa: TButton;
+    btnImprimirRelatorio: TButton;
+    Panel5: TPanel;
+    btnClose: TBitBtn;
+    btnCadastro: TButton;
+    Panel3: TPanel;
+    lblPesquisaCodigo: TLabel;
+    lblPesquisaUsuario: TLabel;
+    edtPesquisaCodigo: TEdit;
+    edtPesquisaMatricula: TEdit;
+    ImageList1: TImageList;
+    frxCodigoBarra: TfrxReport;
+    frxDBDataset1: TfrxDBDataset;
+    frxPDFExport1: TfrxPDFExport;
+    frxSimpleTextExport1: TfrxSimpleTextExport;
+    dsCodBarra: TDataSource;
+    PopupMenu1: TPopupMenu;
+    AlterarRegistroSelecionado1: TMenuItem;
+    AdicionarRegistroNovo1: TMenuItem;
+    cdsCodBarra: TClientDataSet;
+    cdsCodBarraCODIGO: TStringField;
+    cdsCodBarranumMatricula: TStringField;
+    cdsCodBarranumSenha: TStringField;
+    cdsCodBarraDATACADASTRO: TDateTimeField;
+    Label1: TLabel;
+    dbeUsuario: TEdit;
+    cdsCodBarraUsuario: TStringField;
+    edtPesquisaUsuario: TEdit;
+    lblPesquisaMatricula: TLabel;
+    chkbMostraSenha: TCheckBox;
+    procedure btnIncluirClick(Sender: TObject);
+    procedure btnAlterarClick(Sender: TObject);
+    procedure btnExcluirClick(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure btnCancelarClick(Sender: TObject);
+    procedure btnPesquisaClick(Sender: TObject);
+    procedure btnLimparPesquisaClick(Sender: TObject);
+    procedure btnImprimirRelatorioClick(Sender: TObject);
+    procedure btnCadastroClick(Sender: TObject);
+    procedure btnFecharClick(Sender: TObject);
+    procedure btnCloseClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure edtPesquisaCodigoChange(Sender: TObject);
+    procedure AlterarRegistroSelecionado1Click(Sender: TObject);
+    procedure AdicionarRegistroNovo1Click(Sender: TObject);
+    procedure stgAddItensClick(Sender: TObject);
+    procedure stgAddItensDrawCell(Sender: TObject; ACol, ARow: Integer;
+      Rect: TRect; State: TGridDrawState);
+    procedure btnADDClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormShow(Sender: TObject);
+    procedure chkbMostraSenhaClick(Sender: TObject);
+  private
+    { Private declarations }
+
+    {Procedure}
+    procedure GravarDados;
+    procedure LimpaCampo;
+    procedure LimpaAposADD;
+    procedure TrocaBotao(bValor: Boolean);
+    procedure AtivaDesativaComponentes(bVal: Boolean);
+    //procedure AtivaPesquisa(bVal: Boolean);
+    procedure Pesquisa(sValor: string);
+    procedure ExecutaPesquisa(sFiltro: string; cds: TClientDataSet);
+    procedure CarregaValoresCampos;
+    procedure DeletaLinhasStg(iTotalLinhas: Integer; iLinha: Integer = -1);
+    procedure FecharAplicacao;
+  public
+    { Public declarations }
+    iLinhaItens: Integer;
+  end;
+
+var
+  frmRelatorio: TfrmRelatorio;
+  iBotao : Integer = -1;
+  bValida: Boolean = False;
+  bAlteracao: Boolean = False;
+  bInclusao: Boolean = False;
+  aArrayCodigo: array of string;
+
+implementation
+
+{$R *.dfm}
+
+uses untFuncao, untConstante;
+
+procedure TfrmRelatorio.AdicionarRegistroNovo1Click(Sender: TObject);
+begin
+    pnlTitulo.Caption := 'Cadastro';
+
+    tsCadastro.TabVisible := True;
+
+    // Chama a aba de produto para exutar o botão de alterar
+    tsCadastro.Show;
+
+    // Chama o procedimento de alteração
+    btnIncluirClick(Self);
+
+    // Esconde aba de Pesquisa denovo
+    tsPesquisa.TabVisible := False;
+end;
+
+procedure TfrmRelatorio.AlterarRegistroSelecionado1Click(Sender: TObject);
+begin
+    pnlTitulo.Caption := 'Cadastro';
+
+    CarregaValoresCampos;
+
+    tsCadastro.TabVisible := True;
+
+    // Chama a aba de produto para exutar o botão de alterar
+    tsCadastro.Show;
+
+    // Chama o procedimento de alteração
+    btnAlterarClick(Self);
+
+    // Esconde aba de Pesquisa denovo
+    tsPesquisa.TabVisible := False;
+end;
+
+procedure TfrmRelatorio.AtivaDesativaComponentes(bVal: Boolean);
+var cont: Integer;
+begin
+    for cont := 0 to self.ComponentCount - 1 do
+      begin
+        if(self.Components[cont] is TEdit) and (self.Components[cont].Name <> edtPesquisaCodigo.Name) and
+          (self.Components[cont].Name <> edtPesquisaUsuario.Name) and (self.Components[cont].Name <> edtPesquisaMatricula.Name) then
+          begin
+            // Habilita componentes
+            (Components[cont] as TEdit).ReadOnly  := bVal;
+          end;
+
+        if(self.Components[cont] is TMaskEdit) then
+          begin
+            // Habilita componentes
+            (Components[cont] as TMaskEdit).ReadOnly  := bVal;
+          end;
+      end;
+end;
+
+procedure TfrmRelatorio.btnADDClick(Sender: TObject);
+var iColuna, iLinha: Integer;
+    aArrayValores: array of string;
+begin
+    try
+        if ((Trim(dbeCodigo.Text) = '') or (Trim(dbeUsuario.Text) = '') or (Trim(dbeMatricula.Text) = '') or (Trim(dbeSenha.Text) = '')) then
+          begin
+              Application.MessageBox(PChar('É necessário informar pelo menos os campos: ' +
+                                           'Código,Usuário, Matrícula e Senha!'), 'Atenção!', MB_OK + MB_ICONWARNING);
+              Exit;
+          end
+        else
+          begin
+              SetLength(aArrayValores, 8);
+              if bAlteracao = True then
+                  aArrayValores[1] := dbeCodigo.Text
+              else
+                  aArrayValores[1] := '';//dbeCodigo.Text;
+
+              aArrayValores[2] := dbeUsuario.Text;
+              aArrayValores[3] := dbeMatricula.Text;
+              aArrayValores[4] := dbeSenha.Text;
+              aArrayValores[5] := dbeDataCadastro.Text;
+              //aArrayValores[8] := '';
+
+              { Quando for alteração verifica qual é o código que foi selecionado e
+                salva na posição que esta no grid }
+              if bAlteracao = True then
+                begin
+                  for iLinha := 1 to stgAddItens.RowCount - 1 do
+                    if stgAddItens.Cells[1, iLinha] = dbeCodigo.Text then
+                      begin
+                          stgAddItens.Cells[1,stgAddItens.Row] := dbeCodigo.Text;
+                          stgAddItens.Cells[2,stgAddItens.Row] := dbeUsuario.Text;
+                          stgAddItens.Cells[3,stgAddItens.Row] := dbeMatricula.Text;
+                          stgAddItens.Cells[4,stgAddItens.Row] := dbeSenha.Text;
+                          stgAddItens.Cells[5,stgAddItens.Row] := dbeDataCadastro.Text;
+                          //:= stgAddItens.Cells[8,0] ''
+
+                          Break;
+                      end;
+                  LimpaAposADD
+                end
+              else { Se for inclusação, adiciona uma nova linha no grid e em seguida
+                     adiciona o registro que o usuário digitou }
+                begin
+                    // Adiciona uma nova linha
+                    stgAddItens.RowCount := stgAddItens.RowCount + 1;
+                    iLinhaItens := iLinhaItens + 1;
+                    for iColuna := 1 to 6 do
+                      begin
+                          if iColuna = 6 then
+                            begin
+                                //stgAddItens.Cells[j, i] := 'Remover';
+                            end
+                          else
+                            begin
+                                stgAddItens.Cells[iColuna, iLinhaItens] := aArrayValores[iColuna];
+                            end;
+                      end;
+                    //Habilitar ao finalizar testes
+                    dbeUsuario.Clear;
+                    dbeMatricula.Clear;
+                    dbeSenha.Clear;
+                    dbeDataCadastro.Clear;
+                    dbeDataCadastro.Text := DateTimeToStr(Now);
+                    dbeUsuario.SetFocus;
+                end;
+        end;
+
+    finally
+        Finalize(aArrayValores);
+    end;
+end;
+
+procedure TfrmRelatorio.btnAlterarClick(Sender: TObject);
+var sCodigo: string;
+begin
+    sCodigo := '';
+
+    try
+
+      if Trim(stgAddItens.Cells[1, 1]) = '' then
+        begin
+            Application.MessageBox(PChar('Você não selecionou nenhum registro!' + #13 +
+                                         'Pesquise o registro e selecione-o para alterar!'),
+                                         'Atenção!', MB_OK + MB_ICONQUESTION);
+            Exit;
+        end;
+
+      bAlteracao := True;
+
+      iBotao := 1;
+      AtivaDesativaComponentes(False);
+      TrocaBotao(False);
+
+      // Focando no componente de descrição
+      dbeUsuario.SetFocus;
+
+      { Preparando o cds para edição }
+      //dmModulo.cdsProdutos.Edit;
+
+      //dmModulo.dsItensAlmoxarifado.Edit;
+      dsCodBarra.DataSet.DisableControls;
+
+      // Deixa campos sem edição para evitar alteração nos mesmos
+      dbeCodigo.ReadOnly          := True;
+      dbeDataCadastro.ReadOnly    := True;
+
+    except
+       { ========================== }
+    end;
+end;
+
+procedure TfrmRelatorio.btnCadastroClick(Sender: TObject);
+begin
+    pnlTitulo.Caption := 'Cadastro';
+
+    tsCadastro.TabVisible := True;
+
+    // Chama a aba de produto para exutar o botão de alterar
+    tsCadastro.Show;
+
+    // Esconde aba de Pesquisa denovo
+    tsPesquisa.TabVisible := False;
+
+    //LimpaCampo;
+
+    CarregaValoresCampos;
+end;
+
+procedure TfrmRelatorio.btnCancelarClick(Sender: TObject);
+begin
+    try
+
+        AtivaDesativaComponentes(True);
+        //AtivaPesquisa(True);
+        TrocaBotao(True);
+        { Cancelando uma ação }
+        cdsCodBarra.Cancel;
+        dsCodBarra.DataSet.EnableControls;
+
+        LimpaCampo;
+        DeletaLinhasStg(stgAddItens.RowCount);
+        CarregaValoresCampos;
+
+        { Modifica o valor da variavel para ter erro em outros processos }
+        iBotao := -1;
+
+        iLinhaItens := 0;
+
+        //pnlCadGeral.Visible := False;
+
+        bValida := False;
+
+        bAlteracao := False;
+        bInclusao := False;
+
+    except
+       { =============== }
+    end;
+end;
+
+procedure TfrmRelatorio.btnCloseClick(Sender: TObject);
+begin
+    FecharAplicacao;
+end;
+
+procedure TfrmRelatorio.btnExcluirClick(Sender: TObject);
+var i, j: Integer;
+    sCodigo: string;
+begin
+    sCodigo := '';
+
+    { Preparando exclusão }
+    try
+        { Verifica se existe registro carregado }
+        if Trim(stgAddItens.Cells[1, 1]) = '' then
+          begin
+              Application.MessageBox(PChar('Você não selecionou nenhum registro!' + #13 +
+                                           'Pesquise o registro e selecione-o para excluír!'),
+                                           'Atenção!', MB_OK + MB_ICONQUESTION);
+              Exit;
+          end;
+
+        { Confirma se realmente o usuario quer apagar o registro }
+        if Application.MessageBox('Tem certeza que deseja excluir o(s) registro(s) selecionado(s)?', 'Atenção!',
+                                  MB_YESNO + MB_ICONQUESTION) = mrNo then
+          begin
+              Exit;
+          end;
+
+        { Deletando o(s) registro(s) selecionado(s) }
+        for i := 1 to stgAddItens.RowCount - 1 do
+          begin
+              cdsCodBarra.First;
+              { Verifica os registro do cds para deletar }
+              for j := 1 to cdsCodBarra.RecordCount do
+                begin
+                    if stgAddItens.Cells[1,i] = cdsCodBarraCODIGO.AsString then
+                      begin
+                          { Excluí o registro do banco }
+                          cdsCodBarra.Delete;
+                          { Ao achar o registro e deletar sai do segundo
+                            laço e volta para o primeiro }
+                          Break;
+                      end;
+                    { Joga para o próximo registro }
+                    cdsCodBarra.Next;
+                end;
+          end;
+
+        { Limpa o grid }
+        DeletaLinhasStg(stgAddItens.RowCount);
+
+        { Atualizando CDS }
+        AtivaDesativaCDS(cdsCodBarra, True);
+
+        { Alertando o usuário ao finalizar a tarefa de excluir }
+        Application.MessageBox('Registro excluído com sucesso!', 'Aviso!', MB_OK + MB_ICONQUESTION);
+
+        bValida := False;
+
+        bAlteracao := False;
+        bInclusao := False;
+
+    { Excessao em caso de erro }
+    except
+       { ========================= }
+    end;
+end;
+
+procedure TfrmRelatorio.btnFecharClick(Sender: TObject);
+begin
+    FecharAplicacao;
+end;
+
+procedure TfrmRelatorio.btnImprimirRelatorioClick(Sender: TObject);
+begin
+    CarregaRelatorio(frxCodigoBarra);
+end;
+
+procedure TfrmRelatorio.btnIncluirClick(Sender: TObject);
+var iCodigoGerado: Integer;
+begin
+    try
+        // Inicia variavel
+        //iCodigoGerado := 0;
+
+        bInclusao := True;
+
+        iBotao := 0;
+        AtivaDesativaComponentes(False);
+        LimpaCampo;
+
+        // Gerando o código sequencial
+        cdsCodBarra.Last;
+        if cdsCodBarra.RecordCount > 0 then
+            iCodigoGerado := cdsCodBarraCODIGO.AsInteger + 1
+        else
+            iCodigoGerado := 1;
+
+        // adicionando o código configurado no componente dbeCodigo
+        dbeCodigo.Text := adiciona_zero_a_direita(iCodigoGerado, iTotalZeroDireita);
+
+        dbeUsuario.SetFocus;
+        TrocaBotao(False);
+
+        { Preparando o cds para inserção }
+        cdsCodBarra.Append;
+        dsCodBarra.DataSet.DisableControls;
+
+        // Adiciona data atual
+        dbeDataCadastro.Text := DateTimeToStr(Now);
+
+        // Deixa componente sem edição
+        dbeCodigo.ReadOnly  := True;
+
+        DeletaLinhasStg(stgAddItens.RowCount);
+
+    except
+       { =================== }
+    end;
+end;
+
+procedure TfrmRelatorio.btnLimparPesquisaClick(Sender: TObject);
+begin
+    edtPesquisaCodigo.Clear;
+    edtPesquisaUsuario.Clear;
+    edtPesquisaMatricula.Clear;
+
+    cdsCodBarra.Filtered := False;
+end;
+
+procedure TfrmRelatorio.btnPesquisaClick(Sender: TObject);
+begin
+    pnlTitulo.Caption := 'Pesquisa';
+
+    tsPesquisa.TabVisible := True;
+
+    tsPesquisa.Show;
+
+    tsCadastro.TabVisible := False;
+
+    bValida := False;
+
+    DeletaLinhasStg(stgAddItens.RowCount);
+
+    edtPesquisaCodigo.SetFocus;
+
+    DesmarcarRegistroDbgrid(DBGrid1, cdsCodBarra);
+
+    DeletaLinhasStg(stgAddItens.RowCount);
+    edtPesquisaCodigo.SetFocus;
+end;
+
+procedure TfrmRelatorio.btnSalvarClick(Sender: TObject);
+var sCodigo: string;
+begin
+    try
+
+        if (Trim(stgAddItens.Cells[2, 1]) = '') then
+          begin
+              Application.MessageBox(PChar('Você não adicionou nenhum item na grade!  ' + #13 +
+                                           'Se você já digitou todos os campos necessario.' + #13 +
+                                           'Clique no botão para adicionar na grade!'), 'Atenção!', MB_OK + MB_ICONWARNING);
+              Exit;
+          end
+        else
+          begin
+              if iBotao = 1 then
+                begin
+                    if (Trim(dbeMatricula.Text) <> '') then
+                      begin
+                          Application.MessageBox(PChar('Existem alterações que não foram aplicada.' + #13 +
+                                                       'Para continuar aplique as alterações!'), 'Atenção!', MB_OK + MB_ICONWARNING);
+                          Exit;
+                      end
+                end;
+
+              { Guardando valor antes de mexer na query }
+              sCodigo := dbeCodigo.Text;
+              AtivaDesativaComponentes(True);
+              //AtivaPesquisa(True);
+              TrocaBotao(True);
+
+              { Prepara gravacao }
+              GravarDados;
+
+              { Carrega registro atual }
+              //Pesquisa(Trim(sCodigo));
+
+              { Modifica o valor da variavel para não ter erro em outros processos }
+              iBotao := -1;
+
+              { Atualizando CDS }
+              AtivaDesativaCDS(cdsCodBarra, True);
+
+              { Ativando controles do DataSet novamente }
+              dsCodBarra.DataSet.EnableControls;
+
+              //pnlCadGeral.Visible := False;
+
+              cdsCodBarra.Filtered := False;
+
+              // Carregando os valores para os componentes
+              //CarregaValoresCampos;
+
+              bValida := False;
+
+              //DeletaLinhasStg(stgAddItens.RowCount);
+
+              iLinhaItens := 0;
+
+              LimpaCampo;
+
+              bAlteracao := False;
+              bInclusao := False;
+          end;
+    except
+       { ===================== }
+    end;
+end;
+
+procedure TfrmRelatorio.CarregaValoresCampos;
+var i, contador: Integer;
+begin
+    try
+        if cdsCodBarra.RecordCount > 0 then
+          begin
+              if DBGrid1.SelectedRows.Count > 0 then
+                begin
+                    i := 1;
+                    for contador := 0 to DBGrid1.SelectedRows.Count - 1 do
+                      begin
+                          stgAddItens.RowCount := stgAddItens.RowCount + 1;
+                          //O comando SelectedRows irá indicar qual o registro atual no DataSet
+                          dsCodBarra.Dataset.Bookmark := DBGrid1.SelectedRows[contador];
+                          { Passando os valores para os DbEdits }
+                          stgAddItens.Cells[1, i] := cdsCodBarraCODIGO.AsString;
+                          stgAddItens.Cells[2, i] := cdsCodBarraUsuario.AsString;
+                          stgAddItens.Cells[3, i] := cdsCodBarranumMatricula.AsString;
+                          stgAddItens.Cells[4, i] := cdsCodBarranumSenha.AsString;
+                          stgAddItens.Cells[5, i] := cdsCodBarraDATACADASTRO.AsString;
+
+                          i := i + 1;
+                      end;
+                end;
+          end;
+    except
+      { ============== }
+    end;
+end;
+
+procedure TfrmRelatorio.chkbMostraSenhaClick(Sender: TObject);
+begin
+  if chkbMostraSenha.Checked = True then
+    dbeSenha.PasswordChar := #0
+  else
+    dbeSenha.PasswordChar := '*';
+
+end;
+
+procedure TfrmRelatorio.DeletaLinhasStg(iTotalLinhas, iLinha: Integer);
+var i: Integer;
+begin
+    try
+        if iLinha > 0 then
+          begin
+              stgAddItens.Rows[iLinha].Clear;
+              TAuxGrid(stgAddItens).DeleteRow(iLinha);
+          end
+        else
+          begin
+              for i := 1 to iTotalLinhas - 1 do
+                begin
+                    stgAddItens.Rows[i].Clear;
+                    TAuxGrid(stgAddItens).DeleteRow(i);
+                end;
+              stgAddItens.RowCount := 1;
+          end;
+    finally
+        //
+    end;
+end;
+
+procedure TfrmRelatorio.edtPesquisaCodigoChange(Sender: TObject);
+begin
+    Pesquisa('');
+end;
+
+procedure TfrmRelatorio.ExecutaPesquisa(sFiltro: string; cds: TClientDataSet);
+begin
+    { Preparando a pesquisa conforme os parametros passados }
+    cds.Filtered := False;
+    cds.FilterOptions := [foCaseInsensitive];
+    cds.Filter := sFiltro;
+    cds.Filtered := True;
+end;
+
+procedure TfrmRelatorio.FecharAplicacao;
+begin
+    if Application.MessageBox('Realmente deseja sair do sistema', 'Atenção!', MB_YESNO + MB_ICONQUESTION) = mrNo then
+      begin
+        // Continua execução
+        Application.Run;
+      end
+    else
+      begin
+        // Finaliza aplicação
+        Application.Terminate;
+      end;
+end;
+
+procedure TfrmRelatorio.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+    FecharAplicacao;
+end;
+
+procedure TfrmRelatorio.FormCreate(Sender: TObject);
+begin
+    try
+      pnlTitulo.Caption := 'Cadastro';
+
+      tsCadastro.TabVisible := True;
+
+      tsPesquisa.TabVisible := False;
+      tsCadastro.Show;
+
+
+      // Verifica se o componente esta criado
+      if cdsCodBarra.Active = False then
+        begin
+            // cria cds
+            cdsCodBarra.CreateDataSet;
+        end;
+
+      { Desabilita componentes }
+      AtivaDesativaComponentes(True);
+
+      // Modificada status dos botoes
+      TrocaBotao(True);
+
+      { Salvando arquivo .xml }
+      if not ExisteArquivo(ExtractFilePath(Application.ExeName), cRelatorio) then
+        begin
+          cdsCodBarra.SaveToFile(cRelatorio);
+        end
+      else
+        begin
+          // carregando dados
+          cdsCodBarra.LoadFromFile(cRelatorio);
+        end;
+
+      // Sempre ao abrir desativa o filtro
+      cdsCodBarra.Filtered := False;
+
+      LimpaCampo;
+
+      { Criar as colunas }
+      stgAddItens.Cells[1,0] := 'Código';
+      stgAddItens.Cells[2,0] := 'Usuário';
+      stgAddItens.Cells[3,0] := 'Matrícula';
+      stgAddItens.Cells[4,0] := 'Senha';
+      stgAddItens.Cells[5,0] := 'Data Cadastro';
+      stgAddItens.Cells[6,0] := '';
+      { Define o tamanho das colunas }
+      stgAddItens.ColWidths[0] := 20;  // neutro
+      stgAddItens.ColWidths[1] := 80; // código
+      stgAddItens.ColWidths[2] := 150; // usuário
+      stgAddItens.ColWidths[3] := 100; // matrícula
+      stgAddItens.ColWidths[4] := 80;  // senha
+      stgAddItens.ColWidths[5] := 150; // data cadastro
+      stgAddItens.ColWidths[6] := 30; // imagem excluir
+
+      { configuração do Grid - inclui permissão para que o usuário edite valores diretamente no Grid }
+      //stgAddItens.Options := [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goEditing];
+
+  except
+     // ===========================
+  end;
+end;
+
+procedure TfrmRelatorio.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+    if (bInclusao = True) or (bAlteracao = True) then
+      if key = vk_f4 then
+          Abort;
+end;
+
+procedure TfrmRelatorio.FormShow(Sender: TObject);
+begin
+    bValida := False;
+
+    iLinhaItens := 0;
+end;
+
+procedure TfrmRelatorio.GravarDados;
+var aDados: array of string;
+    i, iCodigoGerado: Integer;
+begin
+    try
+        try
+            { Alteração }
+            if iBotao = 1 then
+              begin
+                  // Criando o array
+                  SetLength(aDados, 8);
+                  for i := 1 to stgAddItens.RowCount - 1 do
+                    begin
+                        // Preenchendo o array com os valores dos campos
+                        aDados[0] := stgAddItens.Cells[1, i]; // Código
+                        aDados[1] := stgAddItens.Cells[2, i]; // Usuário
+                        aDados[2] := stgAddItens.Cells[3, i]; // Matrícula
+                        aDados[3] := stgAddItens.Cells[4, i]; // Senha
+                        aDados[4] := stgAddItens.Cells[5, i]; // Data de Cadastro
+
+                        cdsCodBarra.First;
+                        { Percorre o cds para encontrar o registro à ser alterado }
+                        while not cdsCodBarra.Eof do
+                          begin
+                              if aDados[0] = cdsCodBarraCODIGO.AsString then
+                                begin
+                                      { Coloca em edição novamente }
+                                       cdsCodBarra.Edit;
+
+                                       cdsCodBarraCODIGO.AsString       := stgAddItens.Cells[1, i];
+                                       cdsCodBarraUsuario.AsString      := stgAddItens.Cells[2, i];
+                                       cdsCodBarranumMatricula.AsString := stgAddItens.Cells[3, i];
+                                       cdsCodBarranumSenha.AsString     := stgAddItens.Cells[4, i];
+                                       cdsCodBarraDATACADASTRO.AsString := stgAddItens.Cells[5, i];
+
+                                       { Salva dados }
+                                       cdsCodBarra.Post;
+
+                                    Break;
+                                end;
+                              { Joga para o próximo registro }
+                              cdsCodBarra.Next;
+                          end;
+                    end;
+              end
+            else { Inserção }
+              begin
+                  SetLength(aArrayCodigo, stgAddItens.RowCount);
+
+                  // Grava todos os itens
+                  iCodigoGerado := 0;
+                  for i := 1 to stgAddItens.RowCount - 1 do
+                    begin
+                         { Passando os valores para o cds }
+                         if i > 1 then
+                           begin
+                               cdsCodBarra.Insert;
+
+                               if i = 2 then
+                                 begin
+                                    iCodigoGerado := StrToInt(dbeCodigo.Text) + 1;
+                                    cdsCodBarraCODIGO.AsString := adiciona_zero_a_direita(iCodigoGerado, iTotalZeroDireita);
+                                    aArrayCodigo[i] := cdsCodBarraCODIGO.AsString;
+                                 end
+                               else
+                                 begin
+                                    iCodigoGerado := iCodigoGerado + 1;
+                                    cdsCodBarraCODIGO.AsString := adiciona_zero_a_direita(iCodigoGerado, iTotalZeroDireita);
+                                    aArrayCodigo[i] := cdsCodBarraCODIGO.AsString;
+                                 end;
+                           end
+                         else
+                           begin
+                             cdsCodBarraCODIGO.AsString := dbeCodigo.Text;
+                             aArrayCodigo[i] := cdsCodBarraCODIGO.AsString;
+                           end;
+
+                         //cdsCodBarraCODIGO.AsString       := aArrayCodigo[i];
+                         cdsCodBarraUsuario.AsString      := stgAddItens.Cells[2, i];
+                         cdsCodBarranumMatricula.AsString := stgAddItens.Cells[3, i];
+                         cdsCodBarranumSenha.AsString     := stgAddItens.Cells[4, i];
+                         cdsCodBarraDATACADASTRO.AsString := stgAddItens.Cells[5, i];
+
+                         { Salva dados }
+                         cdsCodBarra.Post;
+                    end;
+              end;
+
+        except
+          { ================== }
+        end;
+    finally
+        Finalize(aDados);
+    end;
+end;
+
+procedure TfrmRelatorio.LimpaAposADD;
+begin
+    dbeUsuario.Clear;
+    dbeMatricula.Clear;
+    dbeSenha.Clear;
+    dbeDataCadastro.Clear;
+end;
+
+procedure TfrmRelatorio.LimpaCampo;
+var j: Integer;
+begin
+    for j := 0 to ComponentCount - 1 do
+      begin
+        if (Components[j] is TEdit) and (Components[j].Name <> edtPesquisaCodigo.Name) and
+           (Components[j].Name <> edtPesquisaUsuario.Name) and (Components[j].Name <> edtPesquisaMatricula.Name) then
+          begin
+            (Components[j] as TEdit).Clear;
+          end;
+
+        {if (Components[j] is TEdit) then
+          begin
+            (Components[j] as TEdit).Clear;
+          end;}
+
+        //if (Components[j] is TDBEdit) then
+          //begin
+            //(Components[j] as TDBEdit).Clear;
+          //end;
+
+        if (Components[j] is TMaskEdit) then
+          begin
+            (Components[j] as TMaskEdit).Clear;
+          end;
+
+        {if (Components[j] is TComboBox) then
+          begin
+            (Components[j] as TComboBox).Text := '';
+          end;}
+      end;
+end;
+
+procedure TfrmRelatorio.Pesquisa(sValor: string);
+var filtro: string;
+begin
+    try
+       { Inicia variavel de filtro }
+       filtro := '';
+
+       { Verifica se e alteracao }
+       if iBotao = 1 then
+         begin
+             ExecutaPesquisa('CODIGO = ' + sValor, cdsCodBarra);
+         end
+       { So adiciona o campo de pesquisa se tiver algum campo preenchido }
+       else if (Trim(edtPesquisaCodigo.Text) = '')  and (Trim(edtPesquisaUsuario.Text) = '') and
+               (Trim(edtPesquisaMatricula.Text) = '') then
+         begin
+             cdsCodBarra.Filtered := False;
+         end
+       else
+         begin
+            cdsCodBarra.Filtered := False;
+            cdsCodBarra.FilterOptions := [foCaseInsensitive];
+
+            { Trabalhando com a qry }
+
+            // filtra pelo codigo
+            if (Trim(edtPesquisaCodigo.Text) <> '') then
+              begin
+                 filtro := 'CODIGO LIKE ' +QuotedStr('%' + edtPesquisaCodigo.Text + '%');
+              end;
+
+            // filtra pelo usuário
+            if (Trim(edtPesquisaUsuario.Text) <> '') and (filtro <> '') then
+              begin
+                 filtro := filtro + ' AND Usuario LIKE ' +QuotedStr('%' + edtPesquisaUsuario.Text + '%');
+              end
+            else if (Trim(edtPesquisaUsuario.Text) <> '') then
+              begin
+                 filtro := 'Usuario LIKE ' +QuotedStr('%' + edtPesquisaUsuario.Text + '%');
+              end;
+
+            // filtra pela matricula
+            if (Trim(edtPesquisaMatricula.Text) <> '') and (filtro <> '') then
+              begin
+                 filtro := filtro + ' AND numMatricula LIKE ' +QuotedStr('%' + edtPesquisaMatricula.Text + '%');
+              end
+            else if (Trim(edtPesquisaMatricula.Text) <> '') then
+              begin
+                 filtro := 'numMatricula LIKE ' +QuotedStr('%' + edtPesquisaMatricula.Text + '%');
+              end;
+
+            cdsCodBarra.Filter := filtro;
+
+            cdsCodBarra.Filtered := True;
+         end;
+
+    except
+      { ======================== }
+    end;
+end;
+
+procedure TfrmRelatorio.stgAddItensClick(Sender: TObject);
+begin
+    if (stgAddItens.Col = 6) and (stgAddItens.Row > 0) then
+      begin
+          DeletaLinhasStg(stgAddItens.RowCount, stgAddItens.Row);
+          //GridDeleteRow(stgAddItens.Row, stgAddItens);
+          iLinhaItens := iLinhaItens - 1;
+      end;
+
+    if (bAlteracao = True) and (stgAddItens.Row > 0) then
+      begin
+          //iGuardaLinha := stgAddItens.Row;
+          if (Trim(dbeMatricula.Text) <> '') then
+            begin
+                if StrToInt(lblLinhaSelecionada.Caption) <> stgAddItens.Row then
+                  begin
+                      if Application.MessageBox('Existem alterações não aplicada, deseja continuar? Os dados alterados serão perdidos!', 'Atenção!',
+                                                 MB_YESNO + MB_ICONQUESTION) = mrNo then
+                        begin
+                            stgAddItens.Row := StrToInt(lblLinhaSelecionada.Caption);
+                            Exit;
+                        end;
+                  end;
+            end;
+
+          dbeCodigo.Text       := stgAddItens.Cells[1,stgAddItens.Row]; // 'Código'
+          dbeUsuario.Text      := stgAddItens.Cells[2,stgAddItens.Row]; // 'Usuário'
+          dbeMatricula.Text    := stgAddItens.Cells[3,stgAddItens.Row]; // 'Matrícula'
+          dbeSenha.Text        := stgAddItens.Cells[4,stgAddItens.Row]; // 'Senha'
+          dbeDataCadastro.Text := stgAddItens.Cells[5,stgAddItens.Row]; // 'Data de Cadastro'
+
+          lblLinhaSelecionada.Caption := IntToStr(stgAddItens.Row);
+          //:= stgAddItens.Cells[8,0] ''
+          dbeMatricula.SetFocus;
+      end;
+end;
+
+procedure TfrmRelatorio.stgAddItensDrawCell(Sender: TObject; ACol, ARow: Integer; Rect: TRect; State: TGridDrawState);
+var iBitmap: TBitmap;
+    sCaminho: string;
+begin
+    iBitmap := TBitmap.Create;
+    sCaminho := ExtractFilePath(ParamStr(0)) + sImagemExcluir;
+    iBitmap.LoadFromFile(sCaminho);
+
+    //if gdFocused in State then
+    if (Acol = 6) and (ARow > 0) then
+      with (Sender as TStringGrid).Canvas do
+        begin
+            Font.Color := clRed;
+            Font.Style := [fsBold, fsItalic];
+            //Brush.Color := clRed;
+            FillRect(Rect);
+            TextOut(Rect.Left, Rect.Top, stgAddItens.Cells[acol,arow]);
+            StretchDraw(Rect, iBitmap);
+        end
+    else if ARow = 0 then
+      with (Sender as TStringGrid).Canvas do
+        begin
+            //Font.Color := clBlue;
+            Font.Style := [fsBold];
+            Font.Color := clRed;
+            //Brush.Color := clBlue;
+            //FillRect(Rect);
+            TextOut(Rect.Left+2, Rect.Top+5, stgAddItens.Cells[acol,arow]);
+        end
+    else
+      with (Sender as TStringGrid).Canvas do
+        begin
+            Font.Color := clBlue;
+            //Font.Style := [fsBold];
+            //Brush.Color := clBlue;
+            //FillRect(Rect);
+            TextOut(Rect.Left+2, Rect.Top+5, stgAddItens.Cells[acol,arow]);
+        end;
+end;
+
+procedure TfrmRelatorio.TrocaBotao(bValor: Boolean);
+begin
+    // Botoes do form
+    btnIncluir.Enabled   := bValor; // Novo registro
+    btnAlterar.Enabled   := bValor; // Alterar registro visualizado
+    btnExcluir.Enabled   := bValor; // Excluir registro visualizado
+    btnFechar.Enabled    := bValor; // Fechar o form
+    //btnLimparPesquisa.Enabled := bValor;
+    btnPesquisa.Enabled := bValor;
+
+    // Botão de adicionar produto na grid
+    btnADD.Enabled := not bValor;
+
+    // Estado dos botoes cancelar e gravar e diferente dos demais
+    btnCancelar.Enabled  := not bValor; // Cancelar a acao selecionada (Novo, Alterar)
+    btnSalvar.Enabled    := not bValor; // Salvar registro novo ou modificado
+
+    { Escondendo os botões do formulário }
+    if not bValor then
+      BorderIcons := []
+    else
+      BorderIcons := [biSystemMenu,biMaximize];
+
+    { Esconde a aba de pesquisa ao adicionar e modificar algum item }
+    //tsPesquisaProduto.TabVisible := bValor;
+end;
+
+end.
